@@ -25,6 +25,25 @@ Plugin driver payloads retain the `session_id` wire spelling for the terminal.
 Close notifications, including those completed after restart, use the original
 terminal identity.
 
+## Agent launches
+
+Claude, Codex and Copilot use the native attn launcher by default.
+Settings → Experimental → Direct agent launches is off by default. When enabled,
+the daemon prepares these agents and the terminal execs the harness without a
+retained launcher. Changes apply to new, resumed or explicitly reloaded agents;
+running agents keep their processes. Plugin drivers start their command directly.
+
+Both modes run the user's current login profile. Agent arguments and environment
+overlays pass as positional arguments, preserving quotes, backslashes and
+newlines under sh, bash, zsh and fish. Executable overrides and Copilot's inherited
+instruction directories are read after the actual profile runs.
+
+Claude hook settings and initial prompts travel in argv. In direct mode Copilot
+reads attn's instructions from a terminal-owned directory; the native launcher
+uses a temporary directory. Both keep the user's inherited
+`COPILOT_CUSTOM_INSTRUCTIONS_DIRS` ahead of attn's directory. On exit, attn binds
+the hookless harness's transcript before closing the session so it can be resumed.
+
 ## Claude Code
 
 Probed on 2.1.288 with a mock API.

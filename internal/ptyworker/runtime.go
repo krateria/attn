@@ -81,13 +81,14 @@ type Config struct {
 	CWD              string
 	Cols             uint16
 	Rows             uint16
+	Model            string
+	Effort           string
 	Label            string
 
-	ResumeSessionID   string
-	ResumePicker      bool
-	YoloMode          bool
-	ApprovalRoute     launchcontract.ApprovalRoute
-	InitialPromptFile string
+	ResumeSessionID string
+	ResumePicker    bool
+	YoloMode        bool
+	ApprovalRoute   launchcontract.ApprovalRoute
 
 	ThemeForeground  string
 	ThemeBackground  string
@@ -99,8 +100,9 @@ type Config struct {
 	ClaudeExecutable  string
 	CodexExecutable   string
 	CopilotExecutable string
-	ExternalCommand   []string
-	ExternalEnv       []string
+	AgentLoginShell   bool
+	AgentArgv         []string
+	AgentEnv          []string
 	ExternalCWD       string
 	DaemonEnv         []string
 	UnattendedLaunch  launchcontract.UnattendedLaunchSpec
@@ -291,31 +293,22 @@ func (r *Runtime) run(ctx context.Context) error {
 			return fmt.Errorf("adopt PTY session: %w", err)
 		}
 	} else if err := r.manager.Spawn(pty.SpawnOptions{
-		ID:                r.cfg.SessionID,
-		CWD:               r.cfg.CWD,
-		Agent:             r.cfg.Agent,
-		Label:             r.cfg.Label,
-		Cols:              r.cfg.Cols,
-		Rows:              r.cfg.Rows,
-		ResumeSessionID:   r.cfg.ResumeSessionID,
-		ResumePicker:      r.cfg.ResumePicker,
-		YoloMode:          r.cfg.YoloMode,
-		InitialPromptFile: r.cfg.InitialPromptFile,
+		ID:    r.cfg.SessionID,
+		CWD:   r.cfg.CWD,
+		Agent: r.cfg.Agent,
+		Cols:  r.cfg.Cols,
+		Rows:  r.cfg.Rows,
 		Theme: pty.TerminalTheme{
 			Foreground:  r.cfg.ThemeForeground,
 			Background:  r.cfg.ThemeBackground,
 			Cursor:      r.cfg.ThemeCursor,
 			ANSIPalette: r.cfg.ThemeANSIPalette,
 		},
-		Executable:        r.cfg.Executable,
-		ClaudeExecutable:  r.cfg.ClaudeExecutable,
-		CodexExecutable:   r.cfg.CodexExecutable,
-		CopilotExecutable: r.cfg.CopilotExecutable,
-		ExternalCommand:   r.cfg.ExternalCommand,
-		ExternalEnv:       r.cfg.ExternalEnv,
-		ExternalCWD:       r.cfg.ExternalCWD,
-		DaemonEnv:         r.cfg.DaemonEnv,
-		UnattendedLaunch:  r.cfg.UnattendedLaunch,
+		AgentLoginShell: r.cfg.AgentLoginShell,
+		AgentArgv:       r.cfg.AgentArgv,
+		AgentEnv:        r.cfg.AgentEnv,
+		ExternalCWD:     r.cfg.ExternalCWD,
+		DaemonEnv:       r.cfg.DaemonEnv,
 	}); err != nil {
 		return fmt.Errorf("spawn PTY session: %w", err)
 	}
@@ -372,8 +365,8 @@ func (r *Runtime) run(ctx context.Context) error {
 	entry.CodexExecutable = r.cfg.CodexExecutable
 	entry.CopilotExecutable = r.cfg.CopilotExecutable
 	if r.cfg.UnattendedLaunch.IsZero() {
-		entry.Model = strings.TrimSpace(os.Getenv("ATTN_MODEL"))
-		entry.Effort = strings.TrimSpace(os.Getenv("ATTN_EFFORT"))
+		entry.Model = strings.TrimSpace(r.cfg.Model)
+		entry.Effort = strings.TrimSpace(r.cfg.Effort)
 	} else {
 		entry.UnattendedLaunch = r.cfg.UnattendedLaunch
 	}
